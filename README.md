@@ -31,21 +31,16 @@ Next.js + SQLite + Claude CLI로 구성된 로컬 전용 어드민 대시보드�
 npm install
 ```
 
-### 2. 데모 데이터 시드
-
-```bash
-npm run seed
-```
-
-`data/admin.db`에 샘플 문의·프로젝트·이벤트·이메일 데이터가 생성됩니다.
-
-### 3. 개발 서버 실행
+### 2. 개발 서버 실행
 
 ```bash
 npm run dev
 ```
 
-http://localhost:3001 접속
+http://localhost:3001 접속. `data/admin.db`가 비어있으면 데모 데이터를 자동으로 시드합니다.
+
+> 데이터를 초기화하고 다시 시드하려면: `npm run seed`
+
 
 ### AI 기능 사용 (선택)
 
