@@ -1,14 +1,7 @@
 import type { Metadata } from 'next';
 import { IBM_Plex_Sans_KR, JetBrains_Mono } from 'next/font/google';
 import { NavLink } from '@/components/ui/NavLink';
-import {
-  LayoutDashboard,
-  Kanban,
-  Calendar,
-  Sparkles,
-  Mail,
-} from 'lucide-react';
-import { MaskToggle } from '@/components/ui/MaskToggle';
+import { LayoutDashboard, FilePlus, ClipboardList, Settings } from 'lucide-react';
 import './globals.css';
 
 const sans = IBM_Plex_Sans_KR({
@@ -25,39 +18,35 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'VMC Admin',
-  description: 'VIBE MAFIA CLUB 비즈니스 어드민',
+  title: '가맹점 위험도 분석 시스템',
 };
 
 const navItems = [
   { href: '/', label: '대시보드', Icon: LayoutDashboard },
-  { href: '/board', label: '협업 보드', Icon: Kanban },
-  { href: '/calendar', label: '캘린더', Icon: Calendar },
-  { href: '/generate', label: 'AI 문서 생성', Icon: Sparkles },
-  { href: '/inbox', label: '수신 메일함', Icon: Mail },
+  { href: '/analyses/new', label: '신규 분석', Icon: FilePlus },
+  { href: '/analyses', label: '분석 내역', Icon: ClipboardList },
+  { href: '/guidelines', label: '세부 지침', Icon: Settings },
 ];
 
-export default function RootLayout({
-  children,
-}: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="ko">
       <body className={`${sans.variable} ${mono.variable} font-sans antialiased`}>
-        <aside className="fixed left-0 top-0 h-full w-56 bg-[#1C2333] flex flex-col">
-          <div className="p-4 border-b border-white/10">
-            <div className="text-white text-sm font-semibold mb-3">VMC Admin</div>
-            <MaskToggle />
+        <aside className="fixed left-0 top-0 h-full w-52 bg-[#0a0a0a] flex flex-col">
+          <div className="p-5 border-b border-white/10">
+            <div className="text-white/40 text-xs font-mono tracking-widest uppercase mb-1">PG Compliance</div>
+            <div className="text-white text-sm font-semibold">가맹점 위험도 분석</div>
           </div>
-          <nav className="flex flex-col py-2">
+          <nav className="flex flex-col py-2 flex-1">
             {navItems.map(({ href, label, Icon }) => (
               <NavLink key={href} href={href}>
-                <Icon size={16} />
+                <Icon size={15} />
                 {label}
               </NavLink>
             ))}
           </nav>
         </aside>
-        <main className="ml-56 min-h-screen bg-gray-50 p-6">{children}</main>
+        <main className="ml-52 min-h-screen bg-[#f5f5f5] p-8">{children}</main>
       </body>
     </html>
   );

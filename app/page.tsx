@@ -1,160 +1,112 @@
-import { Inbox, TrendingUp, FolderOpen, CalendarDays } from 'lucide-react';
-import { Card } from '@/components/ui/Card';
+import { getDB } from '@/lib/db';
+import Link from 'next/link';
 import { Badge } from '@/components/ui/Badge';
-import type { DashboardStats, Inquiry, InquiryStatus, BadgeColor } from '@/types';
 
-interface DashboardResponse {
-  stats: DashboardStats;
-  recent_inquiries: Inquiry[];
+function verdictLabel(v: string | null) {
+  if (v === 'approved') return '승인';
+  if (v === 'rejected') return '거절';
+  if (v === 'need_info') return '추가정보';
+  return '-';
 }
 
-const statusColor: Record<InquiryStatus, BadgeColor> = {
-  received: 'gray',
-  in_progress: 'blue',
-  completed: 'green',
-  closed: 'slate',
-};
-
-const statusLabel: Record<InquiryStatus, string> = {
-  received: '접수',
-  in_progress: '진행중',
-  completed: '완료',
-  closed: '종료',
-};
-
-const categoryColor: Record<string, BadgeColor> = {
-  B2B교육: 'purple',
-  AX컨설팅: 'orange',
-  강연의뢰: 'teal',
-  브랜디드콘텐츠협업: 'pink',
-  기타: 'gray',
-};
-
-function formatPipeline(value: number): string {
-  if (value >= 100000000) {
-    return (value / 100000000).toFixed(1) + '억원';
-  }
-  if (value >= 10000) {
-    return Math.floor(value / 10000) + '만원';
-  }
-  return value + '원';
+function verdictColor(v: string | null): 'green' | 'red' | 'yellow' | 'gray' {
+  if (v === 'approved') return 'green';
+  if (v === 'rejected') return 'red';
+  if (v === 'need_info') return 'yellow';
+  return 'gray';
 }
 
-async function getDashboard(): Promise<DashboardResponse> {
-  const base = process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3001';
-  const res = await fetch(`${base}/api/dashboard`, { cache: 'no-store' });
-  if (!res.ok) {
-    throw new Error(`Failed to load dashboard: ${res.status}`);
-  }
-  return res.json();
+function statusLabel(s: string) {
+  const map: Record<string, string> = { pending: '대기', running: '분석중', completed: '완료', failed: '실패' };
+  return map[s] ?? s;
 }
 
-export default async function DashboardPage() {
-  const { stats, recent_inquiries } = await getDashboard();
+export default function DashboardPage() {
+  const db = getDB();
 
-  const kpis = [
-    {
-      label: '활성 문의',
-      value: String(stats.active_inquiries),
-      Icon: Inbox,
-      iconClass: 'text-indigo-500 bg-gray-100',
-    },
-    {
-      label: '파이프라인',
-      value: formatPipeline(stats.pipeline_total),
-      Icon: TrendingUp,
-      iconClass: 'text-green-500 bg-gray-100',
-    },
-    {
-      label: '진행 중 프로젝트',
-      value: String(stats.active_projects),
-      Icon: FolderOpen,
-      iconClass: 'text-blue-500 bg-gray-100',
-    },
-    {
-      label: '이번 주 일정',
-      value: String(stats.upcoming_events),
-      Icon: CalendarDays,
-      iconClass: 'text-yellow-500 bg-gray-100',
-    },
+  const total = (db.prepare('SELECT COUNT(*) as cnt FROM analyses').get() as { cnt: number }).cnt;
+  const pending = (db.prepare("SELECT COUNT(*) as cnt FROM analyses WHERE status = 'pending'").get() as { cnt: number }).cnt;
+  const running = (db.prepare("SELECT COUNT(*) as cnt FROM analyses WHERE status = 'running'").get() as { cnt: number }).cnt;
+  const completed = (db.prepare("SELECT COUNT(*) as cnt FROM analyses WHERE status = 'completed'").get() as { cnt: number }).cnt;
+
+  const approved = (db.prepare("SELECT COUNT(*) as cnt FROM analyses WHERE verdict = 'approved'").get() as { cnt: number }).cnt;
+  const rejected = (db.prepare("SELECT COUNT(*) as cnt FROM analyses WHERE verdict = 'rejected'").get() as { cnt: number }).cnt;
+  const needInfo = (db.prepare("SELECT COUNT(*) as cnt FROM analyses WHERE verdict = 'need_info'").get() as { cnt: number }).cnt;
+
+  const recent = db.prepare(`
+    SELECT a.id, a.status, a.verdict, a.created_at,
+           m.name as merchant_name, m.category as merchant_category
+    FROM analyses a JOIN merchants m ON m.id = a.merchant_id
+    ORDER BY a.created_at DESC LIMIT 5
+  `).all() as { id: number; status: string; verdict: string | null; created_at: string; merchant_name: string; merchant_category: string }[];
+
+  const stats = [
+    { label: '전체', value: total },
+    { label: '대기', value: pending },
+    { label: '분석중', value: running },
+    { label: '완료', value: completed },
   ];
 
   return (
-    <div>
-      <h1 className="text-xl font-semibold text-gray-800 mb-6">대시보드</h1>
+    <div className="max-w-5xl">
+      <h1 className="text-xl font-semibold text-[#0a0a0a] mb-6">대시보드</h1>
 
-      <div className="grid grid-cols-4 gap-4 mb-8">
-        {kpis.map(({ label, value, Icon, iconClass }) => (
-          <Card key={label}>
-            <div className="flex items-center gap-3">
-              <div
-                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${iconClass}`}
-              >
-                <Icon size={20} />
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-gray-800">{value}</div>
-                <div className="text-xs text-gray-500">{label}</div>
-              </div>
-            </div>
-          </Card>
+      <div className="grid grid-cols-4 gap-3 mb-6">
+        {stats.map((s) => (
+          <div key={s.label} className="bg-white border border-[#e5e5e5] rounded-lg p-5">
+            <div className="text-xs text-[#999] mb-1">{s.label}</div>
+            <div className="text-3xl font-semibold text-[#0a0a0a]">{s.value}</div>
+          </div>
         ))}
       </div>
 
-      <Card title="최근 문의">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-gray-200 text-left text-xs text-gray-500 uppercase tracking-wider">
-                <th className="py-2 pr-4 font-medium">ID</th>
-                <th className="py-2 pr-4 font-medium">회사</th>
-                <th className="py-2 pr-4 font-medium">카테고리</th>
-                <th className="py-2 pr-4 font-medium">상태</th>
-                <th className="py-2 pr-4 font-medium">수신일</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recent_inquiries.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={5}
-                    className="py-6 text-center text-sm text-gray-400"
-                  >
-                    최근 문의가 없습니다.
-                  </td>
-                </tr>
-              ) : (
-                recent_inquiries.map((inq) => (
-                  <tr
-                    key={inq.id}
-                    className="border-b border-gray-100 last:border-0"
-                  >
-                    <td className="py-2.5 pr-4 font-mono text-xs text-gray-500">
-                      {inq.id}
-                    </td>
-                    <td className="py-2.5 pr-4 text-gray-700">{inq.company}</td>
-                    <td className="py-2.5 pr-4">
-                      <Badge
-                        label={inq.category}
-                        color={categoryColor[inq.category] ?? 'gray'}
-                      />
-                    </td>
-                    <td className="py-2.5 pr-4">
-                      <Badge
-                        label={statusLabel[inq.status] ?? inq.status}
-                        color={statusColor[inq.status] ?? 'gray'}
-                      />
-                    </td>
-                    <td className="py-2.5 pr-4 text-gray-500">
-                      {inq.received_at ?? '-'}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+      {completed > 0 && (
+        <div className="grid grid-cols-3 gap-3 mb-6">
+          {[
+            { label: '승인', value: approved, color: '#16a34a' },
+            { label: '거절', value: rejected, color: '#dc2626' },
+            { label: '추가정보 요청', value: needInfo, color: '#d97706' },
+          ].map((v) => (
+            <div key={v.label} className="bg-white border border-[#e5e5e5] rounded-lg p-5">
+              <div className="text-xs mb-1" style={{ color: v.color }}>{v.label}</div>
+              <div className="text-3xl font-semibold text-[#0a0a0a]">{v.value}</div>
+            </div>
+          ))}
         </div>
-      </Card>
+      )}
+
+      <div className="bg-white border border-[#e5e5e5] rounded-lg">
+        <div className="px-5 py-4 border-b border-[#f0f0f0]">
+          <h2 className="text-sm font-medium text-[#0a0a0a]">최근 분석</h2>
+        </div>
+        {recent.length === 0 ? (
+          <div className="py-12 text-center text-sm text-[#999]">
+            분석 내역이 없습니다.{' '}
+            <Link href="/analyses/new" className="underline text-[#0a0a0a]">신규 분석을 시작하세요.</Link>
+          </div>
+        ) : (
+          <div className="divide-y divide-[#f0f0f0]">
+            {recent.map((r) => (
+              <Link
+                key={r.id}
+                href={`/analyses/${r.id}`}
+                className="flex items-center justify-between px-5 py-3.5 hover:bg-[#fafafa] transition-colors"
+              >
+                <div>
+                  <div className="text-sm font-medium text-[#0a0a0a]">{r.merchant_name}</div>
+                  <div className="text-xs text-[#999] mt-0.5">{r.merchant_category} · {r.created_at}</div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-[#aaa]">{statusLabel(r.status)}</span>
+                  {r.verdict && (
+                    <Badge color={verdictColor(r.verdict)}>{verdictLabel(r.verdict)}</Badge>
+                  )}
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
