@@ -28,13 +28,13 @@ Next.js + SQLite + Claude CLI로 구성된 로컬 전용 어드민 대시보드�
 ### 1. 의존성 설치
 
 ```bash
-pnpm install
+npm install
 ```
 
 ### 2. 데모 데이터 시드
 
 ```bash
-pnpm seed
+npm run seed
 ```
 
 `data/admin.db`에 샘플 문의·프로젝트·이벤트·이메일 데이터가 생성됩니다.
@@ -42,7 +42,7 @@ pnpm seed
 ### 3. 개발 서버 실행
 
 ```bash
-pnpm dev
+npm run dev
 ```
 
 http://localhost:3001 접속
