@@ -1,89 +1,80 @@
-# VMC Admin Starter
+# vmc-admin-starter — Sample: PG 가맹점 위험도 분석 시스템
 
-AI 기반 비즈니스 어드민 실습 프로젝트.  
-Next.js + SQLite + Claude CLI로 구성된 로컬 전용 어드민 대시보드입니다.
+> **이 브랜치(`sample`)는 구현 예시입니다.**
+> 빈 캔버스 템플릿은 [`main` 브랜치](https://github.com/vibemafiaclub/vmc-admin-starter)를 사용하세요.
 
-## 주요 기능
+---
 
-- **대시보드** — 문의·파이프라인·프로젝트·일정 KPI 한눈에
-- **협업 보드** — 칸반/테이블/카드 뷰, 드래그앤드롭 상태 변경
-- **캘린더** — 월별 일정 관리
-- **AI 문서 생성** — Claude CLI로 이메일·제안서·PRD·슬라이드 스트리밍 생성
-- **수신 메일함** — AI 답신 초안 작성 → 피드백 → 발신 승인 플로우
-- **마스킹 토글** — 민감 정보 마스킹 ON/OFF (데모용)
+## 무엇을 만들었나
 
-## 기술 스택
+PG사 컴플라이언스 팀이 신규 가맹점의 위험도를 AI로 분석하는 내부 도구.
+영업 담당자가 가맹점 정보를 입력하면 Claude가 신원·업종·웹 평판을 다각도로 분석해 승인/거절/추가정보요청을 권고한다.
 
-| 항목 | 버전 |
-|------|------|
-| Next.js (App Router) | 16.2.2 |
-| React | 19.2.4 |
-| TypeScript | 5 |
-| Tailwind CSS | 4 |
-| SQLite (better-sqlite3) | 11 |
-| Claude CLI | 최신 |
+### 화면 구성
+
+| 화면 | 경로 | 설명 |
+|------|------|------|
+| 대시보드 | `/` | 분석 현황 통계 |
+| 신규 분석 | `/analyses/new` | 가맹점 정보 입력 폼 |
+| 분석 내역 | `/analyses` | 전체 이력 테이블 |
+| 분석 결과 | `/analyses/[id]` | 관점별 분석 결과 + 종합 보고서 |
+| 세부 지침 | `/guidelines` | AI 분석 지침 편집 |
+
+### AI 분석 흐름
+
+```
+가맹점 정보 입력
+→ POST /api/analyses/[id]/run
+→ DB에서 지침 로드 (없으면 기본값 사용)
+→ claude -p 로 SSE 스트리밍 분석
+→ 신원 확인 / 업종 위험도 / 웹 평판 3관점 분석
+→ verdict(approved | rejected | need_info) + 보고서 저장
+→ 결과 화면 표시
+```
+
+세부 지침 페이지에서 지침을 수정하면 다음 분석부터 AI 행동이 달라진다.
+
+---
 
 ## 시작하기
 
-### 1. 의존성 설치
-
 ```bash
 npm install
+npm run dev   # http://localhost:3001
 ```
 
-### 2. 개발 서버 실행
+---
+
+## 테스트 케이스
+
+`test-fixtures/sample-merchant.md` — 저위험/고위험/경계선 3개 케이스 준비됨.
+
+---
+
+## 기술 스택
+
+- **Next.js 16** App Router (React 19)
+- **SQLite** (better-sqlite3) — 로컬 파일 DB, 별도 서버 불필요
+- **Claude CLI** (`claude -p`) — AI 분석 에이전트
+- **Tailwind CSS 4** — 모노크롬 디자인 시스템
+
+---
+
+## 이 구현에서 배우는 것
+
+1. **DB 테이블 → API route → 페이지** 3-tier 흐름
+2. **SSE 스트리밍** — `ReadableStream` + `fetch` + `EventSource` 패턴
+3. **AI를 도구로 쓰기** — `claude -p`로 구조화된 JSON 출력 받기
+4. **DB 기반 프롬프트 설정** — 지침을 DB에 저장해 코드 수정 없이 AI 행동 제어
+
+---
+
+## 직접 만들어보기
+
+`main` 브랜치를 clone해서 이 구현을 처음부터 따라 만들 수 있다.
 
 ```bash
-npm run dev
-```
-
-http://localhost:3001 접속. `data/admin.db`가 비어있으면 데모 데이터를 자동으로 시드합니다.
-
-> 데이터를 초기화하고 다시 시드하려면: `npm run seed`
-
-
-### AI 기능 사용 (선택)
-
-문서 생성 및 메일 초안 기능은 Claude CLI가 필요합니다.
-
-```bash
-npm install -g @anthropic-ai/claude-code
-claude auth login
-```
-
-## 아키텍처
-
-3-tier 레이어드 아키텍처를 따릅니다.
-
-```
-Presentation   →  app/*/page.tsx, components/
-Application    →  app/api/*/route.ts
-Infrastructure →  lib/, scripts/
-```
-
-- **Presentation → Application**: fetch()로만 호출, lib/ 직접 import 금지
-- **Application → Infrastructure**: 직접 import 허용
-- **마스킹**: API 레이어에서만 적용, 클라이언트 재마스킹 금지
-
-자세한 스펙은 `SPEC.md` 참조.
-
-## 디렉토리 구조
-
-```
-├── app/
-│   ├── layout.tsx          # 사이드바 레이아웃
-│   ├── page.tsx            # 대시보드
-│   ├── board/page.tsx      # 협업 보드
-│   ├── calendar/page.tsx   # 캘린더
-│   ├── generate/page.tsx   # AI 문서 생성
-│   ├── inbox/page.tsx      # 수신 메일함
-│   └── api/                # API 라우트
-├── components/ui/          # 공통 UI 컴포넌트
-├── lib/
-│   ├── db.ts               # SQLite 싱글톤
-│   └── mask.ts             # 마스킹 유틸
-├── scripts/
-│   └── ingest.ts           # 데모 데이터 시드
-├── types/index.ts          # 공통 타입 정의
-└── schema.sql              # DB 스키마
+git clone https://github.com/vibemafiaclub/vmc-admin-starter.git
+cd vmc-admin-starter
+# main 브랜치 = 빈 캔버스 템플릿
 ```
