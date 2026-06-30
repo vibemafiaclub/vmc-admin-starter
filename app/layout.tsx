@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { IBM_Plex_Sans_KR, JetBrains_Mono } from 'next/font/google';
 import { NavLink } from '@/components/ui/NavLink';
-import { LayoutDashboard, FilePlus, ClipboardList, Settings } from 'lucide-react';
+import { Home } from 'lucide-react';
 import './globals.css';
 
 const sans = IBM_Plex_Sans_KR({
@@ -18,14 +18,12 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: '가맹점 위험도 분석 시스템',
+  title: 'My Admin App',
 };
 
+// 여기에 네비게이션 항목을 추가하세요.
 const navItems = [
-  { href: '/', label: '대시보드', Icon: LayoutDashboard },
-  { href: '/analyses/new', label: '신규 분석', Icon: FilePlus },
-  { href: '/analyses', label: '분석 내역', Icon: ClipboardList },
-  { href: '/guidelines', label: '세부 지침', Icon: Settings },
+  { href: '/', label: '홈', Icon: Home },
 ];
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -34,8 +32,8 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body className={`${sans.variable} ${mono.variable} font-sans antialiased`}>
         <aside className="fixed left-0 top-0 h-full w-52 bg-[#0a0a0a] flex flex-col">
           <div className="p-5 border-b border-white/10">
-            <div className="text-white/40 text-xs font-mono tracking-widest uppercase mb-1">PG Compliance</div>
-            <div className="text-white text-sm font-semibold">가맹점 위험도 분석</div>
+            <div className="text-white/40 text-xs font-mono tracking-widest uppercase mb-1">Admin</div>
+            <div className="text-white text-sm font-semibold">My App</div>
           </div>
           <nav className="flex flex-col py-2 flex-1">
             {navItems.map(({ href, label, Icon }) => (

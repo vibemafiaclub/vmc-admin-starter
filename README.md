@@ -1,89 +1,67 @@
-# VMC Admin Starter
+# vmc-admin-starter
 
-AI 기반 비즈니스 어드민 실습 프로젝트.  
-Next.js + SQLite + Claude CLI로 구성된 로컬 전용 어드민 대시보드입니다.
+Next.js 16 App Router + SQLite 기반 업무 자동화 도구 스캐폴딩 템플릿.
 
-## 주요 기능
+여기서 시작해서 원하는 내부 도구를 바이브코딩으로 만든다.
 
-- **대시보드** — 문의·파이프라인·프로젝트·일정 KPI 한눈에
-- **협업 보드** — 칸반/테이블/카드 뷰, 드래그앤드롭 상태 변경
-- **캘린더** — 월별 일정 관리
-- **AI 문서 생성** — Claude CLI로 이메일·제안서·PRD·슬라이드 스트리밍 생성
-- **수신 메일함** — AI 답신 초안 작성 → 피드백 → 발신 승인 플로우
-- **마스킹 토글** — 민감 정보 마스킹 ON/OFF (데모용)
-
-## 기술 스택
-
-| 항목 | 버전 |
-|------|------|
-| Next.js (App Router) | 16.2.2 |
-| React | 19.2.4 |
-| TypeScript | 5 |
-| Tailwind CSS | 4 |
-| SQLite (better-sqlite3) | 11 |
-| Claude CLI | 최신 |
+---
 
 ## 시작하기
 
-### 1. 의존성 설치
-
 ```bash
 npm install
+npm run dev   # http://localhost:3001
 ```
 
-### 2. 개발 서버 실행
+---
+
+## 구조
+
+```
+schema.sql          — DB 스키마 (앱 시작 시 자동 실행)
+lib/db.ts           — SQLite 싱글톤
+types/index.ts      — 타입 정의
+components/ui/      — Badge, Button, Card, NavLink
+app/layout.tsx      — 사이드바 레이아웃
+app/page.tsx        — 시작 페이지
+```
+
+### 3-tier 아키텍처
+
+```
+Presentation  →  app/[page]/page.tsx
+Application   →  app/api/[route]/route.ts
+Infrastructure→  lib/db.ts + schema.sql
+```
+
+`CLAUDE.md`에 전체 아키텍처 규칙이 있습니다.
+
+---
+
+## 새 기능 만들기
+
+1. `schema.sql` — 테이블 추가
+2. `types/index.ts` — 타입 추가
+3. `app/api/[name]/route.ts` — API route 작성
+4. `app/[name]/page.tsx` — 페이지 작성
+5. `app/layout.tsx` — nav 항목 추가
+
+---
+
+## 기술 스택
+
+- **Next.js 16** App Router (React 19)
+- **SQLite** — `better-sqlite3`, 로컬 파일 DB
+- **Claude CLI** — `claude -p`로 AI 기능 추가
+- **Tailwind CSS 4** — 모노크롬 디자인 시스템
+
+---
+
+## 완성 예시
+
+`sample` 브랜치 — 이 템플릿에서 출발해 만든 **PG 가맹점 위험도 AI 분석 시스템**.
 
 ```bash
+git checkout sample
 npm run dev
-```
-
-http://localhost:3001 접속. `data/admin.db`가 비어있으면 데모 데이터를 자동으로 시드합니다.
-
-> 데이터를 초기화하고 다시 시드하려면: `npm run seed`
-
-
-### AI 기능 사용 (선택)
-
-문서 생성 및 메일 초안 기능은 Claude CLI가 필요합니다.
-
-```bash
-npm install -g @anthropic-ai/claude-code
-claude auth login
-```
-
-## 아키텍처
-
-3-tier 레이어드 아키텍처를 따릅니다.
-
-```
-Presentation   →  app/*/page.tsx, components/
-Application    →  app/api/*/route.ts
-Infrastructure →  lib/, scripts/
-```
-
-- **Presentation → Application**: fetch()로만 호출, lib/ 직접 import 금지
-- **Application → Infrastructure**: 직접 import 허용
-- **마스킹**: API 레이어에서만 적용, 클라이언트 재마스킹 금지
-
-자세한 스펙은 `SPEC.md` 참조.
-
-## 디렉토리 구조
-
-```
-├── app/
-│   ├── layout.tsx          # 사이드바 레이아웃
-│   ├── page.tsx            # 대시보드
-│   ├── board/page.tsx      # 협업 보드
-│   ├── calendar/page.tsx   # 캘린더
-│   ├── generate/page.tsx   # AI 문서 생성
-│   ├── inbox/page.tsx      # 수신 메일함
-│   └── api/                # API 라우트
-├── components/ui/          # 공통 UI 컴포넌트
-├── lib/
-│   ├── db.ts               # SQLite 싱글톤
-│   └── mask.ts             # 마스킹 유틸
-├── scripts/
-│   └── ingest.ts           # 데모 데이터 시드
-├── types/index.ts          # 공통 타입 정의
-└── schema.sql              # DB 스키마
 ```
