@@ -8,10 +8,24 @@ Next.js 16 App Router + SQLite 기반 업무 자동화 도구 스캐폴딩 템�
 
 ## 시작하기
 
+> **Node.js 버전**: LTS(v22) 사용을 권장한다 (`.nvmrc` 참고). v20.19 이상 필요.
+
 ```bash
 npm install
 npm run dev   # http://localhost:3001
 ```
+
+### `npm install`에서 better-sqlite3 빌드 오류가 날 때
+
+`prebuild-install` 실패 후 C++ 컴파일러(Visual Studio Build Tools)가 없다는 오류가 보이면, 설치된 Node.js 버전에 맞는 사전 빌드 바이너리를 못 찾아 소스 빌드로 넘어간 경우다. 아래 순서로 해결한다.
+
+1. Node.js 버전 확인: `node -v` — v20.19 미만이면 [nodejs.org](https://nodejs.org)에서 **v22 LTS** 설치
+2. 의존성 재설치:
+   ```bash
+   rm -rf node_modules package-lock.json   # Windows PowerShell: rd /s /q node_modules; del package-lock.json
+   npm install
+   ```
+3. 그래도 실패하면 오류 전문을 강사에게 전달
 
 ---
 
