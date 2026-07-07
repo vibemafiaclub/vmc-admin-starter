@@ -1,6 +1,7 @@
 import Database from 'better-sqlite3';
 import fs from 'fs';
 import path from 'path';
+import { seedDemoData } from './seed';
 
 let db: Database.Database | null = null;
 
@@ -12,5 +13,6 @@ export function getDB(): Database.Database {
   db = new Database(dbPath);
   const schema = fs.readFileSync(path.join(process.cwd(), 'schema.sql'), 'utf-8');
   db.exec(schema);
+  seedDemoData(db);
   return db;
 }

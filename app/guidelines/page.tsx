@@ -2,77 +2,113 @@
 
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/Button';
+import type { Guideline } from '@/types';
 
-const SLOTS = [
-  { key: 'identity', title: '신원 확인' },
-  { key: 'industry', title: '업종 위험도' },
-  { key: 'reputation', title: '웹 평판 조사' },
-  { key: 'judgment', title: '종합 판정' },
+const SECTIONS: { key: string; header: string }[] = [
+  { key: 'identity', header: '신원확인' },
+  { key: 'industry', header: '업종위험도' },
+  { key: 'reputation', header: '평판/부정이력' },
+  { key: 'documents', header: '제출서류 정합성' },
+  { key: 'judgment', header: '종합판정' },
 ];
 
-const DEFAULTS: Record<string, string> = {
-  identity: '사업자등록번호, 대표자명, 법인 설립 이력 등 신원 정보의 유효성과 일관성을 확인하라. 허위 정보나 이상 징후가 있는지 판단하라.',
-  industry: '해당 업종의 일반적인 위험도를 평가하라. 도박, 성인, 대부업, 가상자산 등 고위험 업종 여부를 반드시 확인하라.',
-  reputation: '상호명과 사업자 정보를 기반으로 온라인 평판, 민원, 뉴스, 부정적 이력 등을 조사하라. 관련 기사나 사기 이력이 있는지 확인하라.',
-  judgment: '위 세 관점의 분석을 종합하여 최종 판정을 내려라. 위험 요소가 하나라도 high이면 rejected 또는 need_info를 권고하라.',
-};
+type Draft = { title: string; content: string; updated_at: string };
 
 export default function GuidelinesPage() {
-  const [values, setValues] = useState<Record<string, string>>({});
+  const [drafts, setDrafts] = useState<Record<string, Draft>>({});
   const [saving, setSaving] = useState<Record<string, boolean>>({});
   const [saved, setSaved] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     fetch('/api/guidelines')
       .then((r) => r.json())
-      .then((rows: { key: string; content: string }[]) => {
-        const map: Record<string, string> = {};
-        rows.forEach((r) => { map[r.key] = r.content; });
-        setValues(map);
+      .then((rows: Guideline[]) => {
+        const map: Record<string, Draft> = {};
+        rows.forEach((g) => {
+          map[g.key] = { title: g.title, content: g.content, updated_at: g.updated_at };
+        });
+        setDrafts(map);
       });
   }, []);
 
-  const save = async (key: string, title: string) => {
+  const update = (key: string, field: 'title' | 'content', value: string) => {
+    setDrafts((d) => ({ ...d, [key]: { ...d[key], [field]: value } }));
+    setSaved((s) => ({ ...s, [key]: false }));
+  };
+
+  const save = async (key: string) => {
+    const draft = drafts[key];
+    if (!draft?.title.trim() || !draft?.content.trim()) return;
+
     setSaving((s) => ({ ...s, [key]: true }));
-    await fetch(`/api/guidelines/${key}`, {
+    const res = await fetch(`/api/guidelines/${key}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, content: values[key] ?? DEFAULTS[key] }),
+      body: JSON.stringify({ title: draft.title, content: draft.content }),
     });
     setSaving((s) => ({ ...s, [key]: false }));
-    setSaved((s) => ({ ...s, [key]: true }));
-    setTimeout(() => setSaved((s) => ({ ...s, [key]: false })), 2000);
+
+    if (res.ok) {
+      const row: Guideline = await res.json();
+      setDrafts((d) => ({
+        ...d,
+        [key]: { title: row.title, content: row.content, updated_at: row.updated_at },
+      }));
+      setSaved((s) => ({ ...s, [key]: true }));
+    }
   };
 
   return (
     <div className="max-w-3xl">
       <div className="mb-6">
-        <h1 className="text-xl font-semibold text-[#0a0a0a]">세부 지침 관리</h1>
-        <p className="text-xs text-[#999] mt-1">
-          각 분석 관점의 지침을 수정합니다. 저장 후 새 분석부터 적용됩니다.
+        <h1 className="text-xl font-semibold text-[#0a0a0a]">가이드라인 관리</h1>
+        <p className="text-sm text-[#555] mt-1">
+          관점별 심사 지침을 편집합니다. 저장하면 다음 분석부터 반영됩니다.
         </p>
       </div>
 
       <div className="space-y-4">
-        {SLOTS.map(({ key, title }) => (
-          <div key={key} className="bg-white border border-[#e5e5e5] rounded-lg p-5">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-medium text-[#0a0a0a]">{title}</h2>
-              <span className="text-xs font-mono text-[#ccc]">{key}</span>
+        {SECTIONS.map(({ key, header }) => {
+          const draft = drafts[key];
+          const empty = !draft?.title.trim() || !draft?.content.trim();
+          return (
+            <div key={key} className="bg-white border border-[#e5e5e5] rounded-lg p-5">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-sm font-semibold text-[#0a0a0a]">{header}</h2>
+                <span className="text-xs font-mono text-[#ccc]">{key}</span>
+              </div>
+
+              <label className="block text-xs text-[#999] mb-1">제목</label>
+              <input
+                type="text"
+                value={draft?.title ?? ''}
+                onChange={(e) => update(key, 'title', e.target.value)}
+                className="w-full border border-[#e5e5e5] rounded-md px-3 py-2 text-sm focus:outline-none focus:border-[#0a0a0a] bg-white transition-colors mb-3"
+              />
+
+              <label className="block text-xs text-[#999] mb-1">본문</label>
+              <textarea
+                rows={4}
+                value={draft?.content ?? ''}
+                onChange={(e) => update(key, 'content', e.target.value)}
+                className="w-full border border-[#e5e5e5] rounded-md px-3 py-2 text-sm focus:outline-none focus:border-[#0a0a0a] bg-white resize-none transition-colors"
+              />
+
+              <div className="flex items-center justify-between mt-3">
+                <span className="text-xs text-[#999]">
+                  {empty ? (
+                    <span className="text-red-600">제목과 본문을 모두 입력하세요.</span>
+                  ) : draft?.updated_at ? (
+                    `최종 수정: ${draft.updated_at}`
+                  ) : null}
+                </span>
+                <Button onClick={() => save(key)} disabled={saving[key] || empty}>
+                  {saved[key] ? '저장됨' : saving[key] ? '저장 중...' : '저장'}
+                </Button>
+              </div>
             </div>
-            <textarea
-              rows={4}
-              value={values[key] ?? DEFAULTS[key]}
-              onChange={(e) => setValues((v) => ({ ...v, [key]: e.target.value }))}
-              className="w-full border border-[#e5e5e5] rounded-md px-3 py-2 text-sm focus:outline-none focus:border-[#0a0a0a] bg-white resize-none transition-colors"
-            />
-            <div className="flex justify-end mt-3">
-              <Button onClick={() => save(key, title)} disabled={saving[key]}>
-                {saved[key] ? '저장됨 ✓' : saving[key] ? '저장 중...' : '저장'}
-              </Button>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
