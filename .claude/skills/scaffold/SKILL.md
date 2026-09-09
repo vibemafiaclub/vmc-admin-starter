@@ -6,7 +6,13 @@ disable-model-invocation: true
 
 This is the first skill a user runs after downloading this template codebase. The user describes what they want to build — **assume they are a non-developer**. Your job is to turn their requirements into a feasible, fully-specified plan, then generate the project PRD and the per-feature specs.
 
-Throughout, talk to the user in their own language and in plain, non-technical terms. Work through the four stages below in order.
+Throughout, talk to the user in their own language and in plain, non-technical terms. Work through the stages below in order.
+
+## 0. Pick up the domain story
+
+If `docs/domain-story.md` exists, **read it first and treat it as the requirements**. It was produced by `/grilling` and already captures the actors, the work objects, the sequence, the exceptions, and what "done" means — in the user's own vocabulary. Use that vocabulary for the rest of this skill and for everything you write.
+
+If it does not exist, ask the user to describe what they want to build, and suggest they run `/grilling` first if they would rather be interviewed about their work than write it out.
 
 ## 1. Understand the template
 
@@ -22,18 +28,21 @@ Read the user's requirements and assess each one against the template:
 
 Tell the user where each requirement lands, in plain language. Be honest about cost and risk — a non-developer can't see it otherwise.
 
-## 3. Clarify ambiguities
+## 3. Resolve only what the domain story cannot answer
 
-Wherever a requirement is ambiguous or has more than one reasonable approach, ask the user — **one question at a time**, waiting for each answer before the next (asking many at once is bewildering).
+**Do not re-interview the user about their work.** If `/grilling` ran, that ground is already covered — asking again wastes their time and makes the process feel circular. Anything about who does what, in what order, with what, and what counts as finished is settled: read it from the domain story.
 
-For every question:
+Ask only where a **build decision** genuinely changes what the user ends up with, and where the codebase cannot decide it for you. Everything else you decide yourself.
 
-- Frame it for a non-developer: no jargon, concrete consequences.
+For every question you do ask:
+
+- Frame it as a consequence, not a technical choice: what they get either way, never how it is built.
 - When there are multiple options, explain each option's **impact** (what it changes for them — cost, effort, what the product can or can't do) and its **importance** (how much this choice actually matters), so they can judge it.
 - Give your **recommended** option and say why.
+- Ask **one question at a time**, waiting for each answer before the next.
 - If a question can be answered by exploring the codebase, do that instead of asking.
 
-Keep going until the requirements are unambiguous and you and the user share the same picture of what's being built.
+Stop as soon as the plan is buildable. Completeness for its own sake is not the goal here.
 
 ## 4. Produce the PRD and specs
 
