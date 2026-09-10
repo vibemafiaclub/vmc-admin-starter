@@ -44,11 +44,22 @@ For every question you do ask:
 
 Stop as soon as the plan is buildable. Completeness for its own sake is not the goal here.
 
-## 4. Produce the PRD and specs
+## 4. Produce the PRD
 
-Once the plan is clear and agreed:
+Run /to-prd to write the project's PRD. The PRD names the full list of features to be built.
 
-1. Run /to-prd to write the project's PRD. The PRD names the full list of features to be built.
-2. For **every** feature listed in the PRD, run /to-spec to write that feature's spec under `docs/specs/`.
+## 5. Confirm the feature list — stop and wait here
+
+Show the user the feature list from the PRD: the names and one-line descriptions only, in plain language. Ask whether it matches what they had in mind — anything to drop, anything to merge, anything missing.
+
+**Wait for their answer before going further.** This is the last point where the user can steer the build, and the feature list is the only layer they can actually judge: the names come from their own vocabulary, so they can tell at a glance whether it is their work or not. Spec-level detail is not something a non-developer can evaluate, so do not raise it here.
+
+If they ask for changes, update `docs/PRD.md` first, then show the revised list and confirm again.
+
+Once they approve, tell them the next step writes one document per feature and takes a few minutes, so they know what the wait is for.
+
+## 6. Produce the specs
+
+For **every** feature listed in the approved PRD, run /to-spec to write that feature's spec under `docs/specs/`.
 
 Finally, report back the PRD location and the list of specs you created.
