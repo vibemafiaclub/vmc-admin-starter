@@ -57,7 +57,7 @@ Surface form to use for each item on the checklist:
 Other rules:
 
 - **One question at a time.** Wait for the answer. Asking several at once is bewildering.
-- **Speak the user's language, in the user's words.** Mirror their vocabulary exactly — if they say "협력사 등록 심사", never rename it. Introducing a term they did not use requires asking permission first.
+- **Write every single word in the user's language.** If they wrote to you in Korean, every question, every summary, and the whole of `docs/domain-story.md` is in Korean — no stray words from any other language, not even connectives. Mirror their vocabulary exactly — if they say "협력사 등록 심사", never rename it. Introducing a term they did not use requires asking permission first.
 - **Reflect progress every few turns.** Read the story back in two or three numbered sentences and ask whether it is right. This lets the user watch the story grow and shows them the end is near.
 - **When the user cannot answer, do not push.** Rephrase once. If it still does not land, record that point as `(미정)` and move on. Never spend more than two attempts on one point.
 
